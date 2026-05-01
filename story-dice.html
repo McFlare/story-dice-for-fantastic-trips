@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story Dice</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f5f4f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .story-dice-app {
+      text-align: center;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .app-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    .app-subtitle {
+      font-size: 15px;
+      color: #888;
+      margin-bottom: 2.5rem;
+    }
+
+    .dice-grid {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .die-card {
+      background: #ffffff;
+      border: 1px solid #e8e6e0;
+      border-radius: 16px;
+      padding: 1.25rem 1rem;
+      width: 165px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .die-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+      position: absolute;
+      top: 14px;
+    }
+
+    .die-face {
+      width: 90px;
+      height: 90px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      position: relative;
+    }
+
+    .die-face.mood  { background: #EEEDFE; }
+    .die-face.event { background: #E1F5EE; }
+    .die-face.place { background: #FAECE7; }
+
+    .die-face-text {
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.25;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .die-face.mood  .die-face-text { color: #3C3489; }
+    .die-face.event .die-face-text { color: #085041; }
+    .die-face.place .die-face-text { color: #712B13; }
+
+    .die-dots {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 14px;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .die-face.mood  .dot { background: #7F77DD; }
+    .die-face.event .dot { background: #1D9E75; }
+    .die-face.place .dot { background: #D85A30; }
+
+    .die-card.revealed .die-dots      { opacity: 0; }
+    .die-card.revealed .die-face-text { opacity: 1; }
+
+    .die-category {
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      position: absolute;
+      bottom: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .die-card.revealed .die-category { opacity: 1; }
+
+    @keyframes shake {
+      0%   { transform: translate(0,0) rotate(0deg); }
+      20%  { transform: translate(-4px, 2px) rotate(-3deg); }
+      40%  { transform: translate(4px, -2px) rotate(3deg); }
+      60%  { transform: translate(-3px, 3px) rotate(-2deg); }
+      80%  { transform: translate(3px, -1px) rotate(2deg); }
+      100% { transform: translate(0,0) rotate(0deg); }
+    }
+
+    .die-card.rolling { animation: shake 0.12s linear infinite; }
+
+    .roll-btn {
+      background: #1a1a1a;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 44px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      margin-bottom: 1.5rem;
+    }
+
+    .roll-btn:hover  { opacity: 0.85; }
+    .roll-btn:active { transform: scale(0.97); }
+    .roll-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .prompt-banner {
+      background: #ffffff;
+      border: 1px solid #e8e6e0;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .prompt-text {
+      font-size: 15px;
+      color: #1a1a1a;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    .prompt-hint {
+      font-size: 13px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="story-dice-app">
+    <h1 class="app-title">Story Dice</h1>
+    <p class="app-subtitle">Roll all three dice to get your writing prompt</p>
+
+    <div class="dice-grid">
+      <div class="die-card" id="card-mood">
+        <span class="die-label">Mood</span>
+        <div class="die-face mood">
+          <div class="die-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="die-face-text" id="text-mood"></span>
+        </div>
+        <span class="die-category" id="cat-mood"></span>
+      </div>
+
+      <div class="die-card" id="card-event">
+        <span class="die-label">Event</span>
+        <div class="die-face event">
+          <div class="die-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="die-face-text" id="text-event"></span>
+        </div>
+        <span class="die-category" id="cat-event"></span>
+      </div>
+
+      <div class="die-card" id="card-place">
+        <span class="die-label">Place</span>
+        <div class="die-face place">
+          <div class="die-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="die-face-text" id="text-place"></span>
+        </div>
+        <span class="die-category" id="cat-place"></span>
+      </div>
+    </div>
+
+    <button class="roll-btn" id="rollBtn" onclick="rollDice()">Roll the Dice</button>
+
+    <div class="prompt-banner" id="promptBanner">
+      <span class="prompt-hint">Press the button to generate your story prompt!</span>
+    </div>
+  </div>
+
+  <script>
+    const moods  = ['Scary', 'Funny', 'Romantic', 'Sad', 'Awkward', 'Stressful'];
+    const events = ['Lost an object', 'Saw an animal', 'Dropped your phone', 'Found something strange', 'Ate something unusual', 'Met someone new'];
+    const places = ['A small town', 'A beach', 'A bus', 'The airport', 'A festival', 'A big city'];
+
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function rollDice() {
+      const btn = document.getElementById('rollBtn');
+      btn.disabled = true;
+
+      ['card-mood','card-event','card-place'].forEach(id => {
+        const card = document.getElementById(id);
+        card.classList.remove('revealed');
+        card.classList.add('rolling');
+      });
+
+      document.getElementById('promptBanner').innerHTML = '<span class="prompt-hint">Rolling...</span>';
+
+      const mood  = pick(moods);
+      const event = pick(events);
+      const place = pick(places);
+
+      setTimeout(() => {
+        ['card-mood','card-event','card-place'].forEach(id => {
+          document.getElementById(id).classList.remove('rolling');
+        });
+
+        document.getElementById('text-mood').textContent  = mood;
+        document.getElementById('text-event').textContent = event;
+        document.getElementById('text-place').textContent = place;
+
+        document.getElementById('cat-mood').textContent  = 'Mood';
+        document.getElementById('cat-event').textContent = 'Event';
+        document.getElementById('cat-place').textContent = 'Place';
+
+        setTimeout(() => {
+          document.getElementById('card-mood').classList.add('revealed');
+          setTimeout(() => document.getElementById('card-event').classList.add('revealed'), 150);
+          setTimeout(() => document.getElementById('card-place').classList.add('revealed'), 300);
+
+          setTimeout(() => {
+            document.getElementById('promptBanner').innerHTML =
+              `<span class="prompt-text">Write a <strong>${mood.toLowerCase()}</strong> story about someone who <strong>${event.toLowerCase()}</strong> at <strong>${place.toLowerCase()}</strong>.</span>`;
+            btn.disabled = false;
+          }, 500);
+        }, 80);
+      }, 900);
+    }
+  </script>
+</body>
+</html>
